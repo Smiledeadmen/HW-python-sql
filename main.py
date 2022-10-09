@@ -1,7 +1,7 @@
 import psycopg2
 from pprint import pprint
 
-
+# удаление таблиц personaldata и phones
 def drop_table(conn):
     with conn.cursor() as cur:
         cur.execute("""
@@ -9,7 +9,7 @@ def drop_table(conn):
         DROP TABLE phones;
         """)
 
-
+# создание таблиц personaldata и phones
 def create_tables(conn):
     with conn.cursor() as cur:
         cur.execute("""
@@ -28,7 +28,7 @@ def create_tables(conn):
                 );
             """)
 
-
+# добавление нового клиента в таблицы
 def add_new_person(conn, firstname, lastname, email, phones=None):
     with conn.cursor() as cur:
         if phones:
@@ -48,7 +48,7 @@ def add_new_person(conn, firstname, lastname, email, phones=None):
                     (%s, %s, %s); 
                 """, (firstname, lastname, email))
 
-
+# добавление телефона клиенту, если уже был в базе -> создает новую запись в personaldata с новым телефоном
 def add_phone(conn, client_id, number):
     with conn.cursor() as cur:
         cur.execute("""
@@ -84,6 +84,7 @@ def chk_update_phone(conn, client_id, phones):
         else:
             if phones == None:
                 print('Номер не может быть None!')
+                return True
             else:
                 cur.execute("""
                     UPDATE phones 
@@ -91,66 +92,81 @@ def chk_update_phone(conn, client_id, phones):
                     WHERE  phone_id = %s;
                     """, (phones, ph_id))
 
-
+# Редактировение клиента в зависимости от входных аргументов в функцию.
 def edit_client(conn, client_id, firstname=None, lastname=None, email=None, phones=None):
     elements = [firstname, lastname, email, phones]
     with conn.cursor() as cur:
         if elements == [None, None, None, phones]:
-            chk_update_phone(conn, client_id, phones)
+            if chk_update_phone(conn, client_id, phones) == True:
+                print('End')
         elif elements == [None, None, email, phones]:
-            cur.execute("""
+            if chk_update_phone(conn, client_id, phones) == True:
+                print('End')
+            else:
+                cur.execute("""
                     UPDATE personaldata 
                     SET email = %s
                     WHERE  personal_id = %s;
                     """, (email, client_id))
-            chk_update_phone(conn, client_id, phones)
         elif elements == [None, lastname, None, phones]:
-            cur.execute("""
+            if chk_update_phone(conn, client_id, phones) == True:
+                print('End')
+            else:
+                cur.execute("""
                     UPDATE personaldata 
                     SET lastname = %s
                     WHERE  personal_id = %s;
                     """, (lastname, client_id))
-            chk_update_phone(conn, client_id, phones)
         elif elements == [None, lastname, email, phones]:
-            cur.execute("""
+            if chk_update_phone(conn, client_id, phones) == True:
+                print('End')
+            else:
+                cur.execute("""
                     UPDATE personaldata 
                     SET lastname = %s,
                         email = %s
                     WHERE  personal_id = %s;
                     """, (lastname, email, client_id))
-            chk_update_phone(conn, client_id, phones)
         elif elements == [firstname, None, None, phones]:
-            cur.execute("""
+            if chk_update_phone(conn, client_id, phones) == True:
+                print('End')
+            else:
+                cur.execute("""
                     UPDATE personaldata 
                     SET firstname = %s
                     WHERE  personal_id = %s;
                     """, (firstname, client_id))
-            chk_update_phone(conn, client_id, phones)
         elif elements == [firstname, None, email, phones]:
-            cur.execute("""
+            if chk_update_phone(conn, client_id, phones) == True:
+                print('End')
+            else:
+                cur.execute("""
                     UPDATE personaldata 
                     SET firstname = %s,
                         email = %s
                     WHERE  personal_id = %s;
                     """, (firstname, email, client_id))
-            chk_update_phone(conn, client_id, phones)
         elif elements == [firstname, lastname, None, phones]:
-            cur.execute("""
+            if chk_update_phone(conn, client_id, phones) == True:
+                print('End')
+            else:
+                cur.execute("""
                     UPDATE personaldata 
                     SET firstname = %s,
                         lastname = %s
                     WHERE  personal_id = %s;
                     """, (firstname, lastname, client_id))
-            chk_update_phone(conn, client_id, phones)
         elif elements == [firstname, lastname, email, phones]:
-            cur.execute("""
+            if chk_update_phone(conn, client_id, phones) == True:
+                print('End')
+            else:
+                cur.execute("""
                     UPDATE personaldata 
                     SET firstname = %s,
                         lastname = %s,
                         email = %s
                     WHERE  personal_id = %s;
                     """, (firstname, lastname, email, client_id))
-            chk_update_phone(conn, client_id, phones)
         elif elements == [None, None, email, None]:
             cur.execute("""
                     UPDATE personaldata 
@@ -199,7 +215,7 @@ def edit_client(conn, client_id, firstname=None, lastname=None, email=None, phon
                     WHERE  personal_id = %s;
                     """, (firstname, lastname, email, client_id))
 
-
+# удаление телефона у клиента
 def del_phone(conn, client_id, number):
     with conn.cursor() as cur:
         cur.execute("""
@@ -216,7 +232,7 @@ def del_phone(conn, client_id, number):
             where phone_id = %s and number = %s;
             """, (ph_id, number))
 
-
+# удаление клиента
 def del_client(conn, client_id):
     with conn.cursor() as cur:
         cur.execute("""
@@ -237,7 +253,7 @@ def del_client(conn, client_id):
                 where personal_id = %s;
                 """, (client_id,))
 
-
+# Поиск клиента по входным аргументам в функцию.
 def find_client(conn, firstname=None, lastname=None, email=None, phones=None):
     with conn.cursor() as cur:
         cur.execute("""
@@ -255,9 +271,11 @@ with psycopg2.connect(database='personalsdb', user='postgres', password='Ingrad2
     # add_new_person(conn, '222', '222', '222@mail.ru')
     # add_new_person(conn, '333', '333', '333@mail.ru')
     # add_new_person(conn, '555', '555', '555@mail.ru')
-    # add_phone(conn, 9, 12345)
-    # edit_client(conn, 5, '123', None, '123', 10000000000000)
-    # del_phone(conn, 10, 12345)
-    find_client(conn, '222', None, None, None)
-    # del_client(conn, 9)
+    # add_phone(conn, 2, 12345)
+    # edit_client(conn, 3, 'new', None, 'new_email@ya.ru', 849512312322)
+    # edit_client(conn, 1, 'one', None, 'one@ya.ru', 101010101)
+    # del_phone(conn, 2, 12345)
+    # find_client(conn, '222', None, None, None)
+    # find_client(conn, None, None, None, 101010101)
+    del_client(conn, 1)
 conn.close()
